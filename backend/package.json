@@ -1,0 +1,30 @@
+{
+  "name": "ask-my-codebase-backend",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "bun --hot src/server.ts",
+    "start": "bun src/server.ts",
+    "ingest": "bun scripts/ingest.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "tsconfig-paths": "^4.2.0",
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@google/genai": "^2.7.0",
+    "@langchain/classic": "^1.0.34",
+    "@langchain/community": "^1.1.29",
+    "@langchain/core": "^1.1.48",
+    "@langchain/textsplitters": "^1.0.1",
+    "@qdrant/js-client-rest": "^1.18.0",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "axios": "^1.16.1",
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "langchain": "^1.4.2"
+  }
+}
