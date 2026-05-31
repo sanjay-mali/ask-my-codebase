@@ -1,4 +1,4 @@
-# Ask My Codebase Backend
+# Ask Your Codebase
 
 Backend API for indexing code into Qdrant and answering questions with Gemini.
 

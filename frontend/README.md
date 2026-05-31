@@ -1,6 +1,6 @@
-# Ask My Codebase Frontend
+# Ask Your Codebase Frontend
 
-React chat UI for the Ask My Codebase backend.
+React chat UI for the Ask Your Codebase backend.
 
 ## Install
 

@@ -7,7 +7,7 @@ export function App() {
   return (
     <div className="h-screen bg-background text-foreground flex flex-col">
       <header className="h-16 shrink-0 border-b flex items-center justify-center">
-        <h1 className="text-xl font-bold tracking-tight">Ask My Codebase</h1>
+        <h1 className="text-xl font-bold tracking-tight">Ask Your Codebase</h1>
       </header>
 
       <main className="flex-1 overflow-hidden">
