@@ -40,4 +40,5 @@ export const env = {
     "MAX_QUESTION_LENGTH",
     DEFAULT_MAX_QUESTION_LENGTH,
   ),
+  databaseUrl: readRequiredEnv("DATABASE_URL"),
 };
