@@ -41,4 +41,5 @@ export const env = {
     DEFAULT_MAX_QUESTION_LENGTH,
   ),
   databaseUrl: readRequiredEnv("DATABASE_URL"),
+  jwtSecret: readRequiredEnv("JWT_SECRET"),
 };
