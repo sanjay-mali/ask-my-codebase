@@ -1,11 +1,18 @@
 import { Router } from "express";
 import { env } from "../config/env";
 import { askQuestion } from "../services/answer";
+import { createConversation, getConversation } from "../services/conversation";
 
 export const askRouter = Router();
 
 askRouter.post("/", async (req, res) => {
   const question = typeof req.body?.q === "string" ? req.body.q.trim() : "";
+  const userId = req.user?.id;
+
+  if (!userId) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
 
   if (!question) {
     res.status(400).json({ error: "Question is required." });
@@ -19,17 +26,39 @@ askRouter.post("/", async (req, res) => {
     return;
   }
 
+  let conversationId: string | undefined;
+
   try {
-    const response = await askQuestion(question);
+    conversationId = req.body?.conversationId;
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Invalid conversationId.";
+
+    res.status(400).json({ error: message });
+    return;
+  }
+
+  try {
+    if (conversationId) {
+      const conversation = await getConversation(conversationId, userId);
+
+      if (!conversation || conversation.userId !== userId) {
+        res.status(404).json({ error: "Conversation not found." });
+        return;
+      }
+    } else {
+      const conversation = await createConversation(userId);
+      conversationId = conversation.id;
+    }
+
+    const response = await askQuestion(conversationId, question);
 
     res.setHeader("Content-Type", "text/plain; charset=utf-8");
     res.setHeader("Cache-Control", "no-cache");
     res.setHeader("Connection", "keep-alive");
 
     for await (const chunk of response) {
-      if (chunk.text) {
-        res.write(chunk.text);
-      }
+      res.write(chunk);
     }
 
     res.end();

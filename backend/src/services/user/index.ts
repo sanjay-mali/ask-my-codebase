@@ -21,7 +21,7 @@ export async function createUser(
   });
 }
 
-export function getUser(userId: number) {
+export function getUser(userId: string) {
   return prisma.user.findFirst({
     where: {
       id: userId,
@@ -29,7 +29,7 @@ export function getUser(userId: number) {
   });
 }
 export async function updateUser(
-  userId: number,
+  userId: string,
   name: string,
   email: string,
   newPassword: string,
@@ -49,7 +49,11 @@ export async function updateUser(
     throw new Error("Invalid current password");
   }
 
-  const hashedPassword = await Bun.password.hash(newPassword);
+  const hashedPassword = await Bun.password.hash(newPassword, {
+    algorithm: "argon2id",
+    memoryCost: 65536,
+    timeCost: 3,
+  });
 
   return prisma.user.update({
     where: { id: userId },

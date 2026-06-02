@@ -9,10 +9,12 @@ authRouter.post("/create", async (req, res) => {
   const { email, name, password } = req.body;
 
   try {
-    return await createUser(name, email, password);
+    const user = await createUser(name, email, password);
+
+    res.status(201).json(user);
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : "Unable to answer question.";
+      error instanceof Error ? error.message : "Unable to create user.";
 
     res.status(500).json({ error: message });
   }
@@ -39,10 +41,10 @@ authRouter.post("/login", async (req, res) => {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    return res.status(200).json({ message: "Login succefully" });
+    return res.status(200).json({ message: "Login successfully" });
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : "Unable to answer question.";
+      error instanceof Error ? error.message : "Unable to log in.";
 
     res.status(500).json({ error: message });
   }

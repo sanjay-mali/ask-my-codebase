@@ -1,26 +1,27 @@
 import { Router } from "express";
-import { createUser, getUser, updateUser } from "../services/user";
+import { getUser, updateUser } from "../services/user";
 
 export const userRouter = Router();
 
-userRouter.post("/user", async (req, res) => {
-  const { email, name, password } = req.body;
-
-  try {
-    return await createUser(name, email, password);
-  } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Unable to answer question.";
-
-    res.status(500).json({ error: message });
-  }
-});
-
 userRouter.put("/user", async (req, res) => {
-  const { userId, email, name, oldPassword, newPassword } = req.body;
+  const { email, name, oldPassword, newPassword } = req.body;
+  const userId = req.user?.id;
+
+  if (!userId) {
+    res.status(401).json({ error: "Unauthorized." });
+    return;
+  }
 
   try {
-    return await updateUser(userId, name, email, newPassword, oldPassword);
+    const user = await updateUser(
+      userId,
+      name,
+      email,
+      newPassword,
+      oldPassword,
+    );
+
+    res.json(user);
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Unable to answer question.";
@@ -30,10 +31,22 @@ userRouter.put("/user", async (req, res) => {
 });
 
 userRouter.get("/user", async (req, res) => {
-  const { userId } = req.query;
+  const userId = req.user?.id;
+
+  if (!userId) {
+    res.status(401).json({ error: "Unauthorized." });
+    return;
+  }
 
   try {
-    return await getUser(userId);
+    const user = await getUser(userId);
+
+    if (!user) {
+      res.status(404).json({ error: "User not found." });
+      return;
+    }
+
+    res.json(user);
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Unable to answer question.";
