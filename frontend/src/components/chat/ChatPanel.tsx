@@ -6,7 +6,12 @@ import type { ChatMessage } from "@/types/chat";
 import { Bot, Code2, Send, User } from "lucide-react";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 
-export function ChatPanel() {
+type ChatPanelProps = {
+  isAuthenticated: boolean;
+  onAuthRequired: () => void;
+};
+
+export function ChatPanel({ isAuthenticated, onAuthRequired }: ChatPanelProps) {
   const [question, setQuestion] = useState("");
   const [chat, setChat] = useState<ChatMessage | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -26,6 +31,11 @@ export function ChatPanel() {
     const currentQuestion = question.trim();
 
     if (!currentQuestion) return;
+
+    if (!isAuthenticated) {
+      onAuthRequired();
+      return;
+    }
 
     setQuestion("");
     setChat({

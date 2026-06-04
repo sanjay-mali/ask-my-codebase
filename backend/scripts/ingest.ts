@@ -59,6 +59,6 @@ async function ingestCodebase(path: string) {
   console.log(`Indexed ${allPoints.length} chunks from ${docs.length} files`);
 }
 
-const targetPath = process.argv[2] ?? "../backend";
+const targetPath = process.argv[2] ?? "../backend/src";
 
 ingestCodebase(targetPath);

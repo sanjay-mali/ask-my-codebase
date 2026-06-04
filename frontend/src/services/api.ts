@@ -3,6 +3,25 @@ type AskCodebaseOptions = {
   onChunk: (answer: string) => void;
 };
 
+export type AuthUser = {
+  id: string;
+  name: string;
+  email: string;
+};
+
+export type LoginInput = {
+  email: string;
+  password: string;
+};
+
+export type RegisterInput = LoginInput & {
+  name: string;
+};
+
+type AuthResponse = {
+  user: AuthUser;
+};
+
 const runtimeProcess = typeof process === "undefined" ? undefined : process;
 const API_BASE_URL =
   runtimeProcess?.env?.BACKEND_URL || "http://localhost:8080";
@@ -19,9 +38,67 @@ async function readErrorMessage(response: Response) {
   return body || `Request failed: ${response.status}`;
 }
 
+async function requestJson<T>(
+  path: string,
+  options: Omit<RequestInit, "credentials"> = {},
+) {
+  const headers = new Headers(options.headers);
+  headers.set("Content-Type", "application/json");
+
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    ...options,
+    credentials: "include",
+    headers,
+  });
+
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response));
+  }
+
+  return (await response.json()) as T;
+}
+
+export async function loginUser(input: LoginInput) {
+  const response = await requestJson<AuthResponse>("/auth/login", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+
+  return response.user;
+}
+
+export async function registerUser(input: RegisterInput) {
+  const response = await requestJson<AuthResponse>("/auth/register", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+
+  return response.user;
+}
+
+export async function getCurrentUser() {
+  try {
+    const response = await requestJson<AuthResponse>("/auth/me");
+    return response.user;
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("Unauthorized")) {
+      return null;
+    }
+
+    throw error;
+  }
+}
+
+export async function logoutUser() {
+  await requestJson<{ message: string }>("/auth/logout", {
+    method: "POST",
+  });
+}
+
 export async function askCodebase({ question, onChunk }: AskCodebaseOptions) {
   const response = await fetch(`${API_BASE_URL}/ask`, {
     method: "POST",
+    credentials: "include",
     headers: {
       "Content-Type": "application/json",
     },

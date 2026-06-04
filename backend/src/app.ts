@@ -11,9 +11,19 @@ import { Authorize } from "./middleware/authorize";
 export function createApp() {
   const app = express();
 
+  if (process.env.NODE_ENV === "production" && env.corsOrigin === "*") {
+    throw new Error("CORS_ORIGIN must be set explicitly in production.");
+  }
+
+  const corsOrigin =
+    env.corsOrigin === "*"
+      ? true
+      : env.corsOrigin.split(",").map((origin) => origin.trim());
+
   app.use(
     cors({
-      origin: env.corsOrigin,
+      origin: corsOrigin,
+      credentials: true,
     }),
   );
   app.use(express.json({ limit: "1mb" }));

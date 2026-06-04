@@ -12,19 +12,30 @@ export async function createUser(
     timeCost: 3,
   });
 
-  return prisma.user.create({
+  const user = prisma.user.create({
     data: {
       email: email,
       name: name,
       password: hashedPassword,
     },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+    },
   });
+  return user;
 }
 
 export function getUser(userId: string) {
   return prisma.user.findFirst({
     where: {
       id: userId,
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
     },
   });
 }
@@ -61,6 +72,11 @@ export async function updateUser(
       name,
       email,
       password: hashedPassword,
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
     },
   });
 }

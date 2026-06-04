@@ -19,6 +19,7 @@
     "highlight.js": "^11.11.1",
     "katex": "^0.17.0",
     "lucide-react": "^0.545.0",
+    "radix-ui": "^1.4.3",
     "react": "^19",
     "react-dom": "^19",
     "react-markdown": "^10.1.0",
