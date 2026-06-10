@@ -1,15 +1,17 @@
 import { MarkdownRenderer } from "@/components/MarkdownRenderer";
 import { Button } from "@/components/ui/button";
-import { askCodebase, type DbMessage } from "@/services/api";
+import { askFinanceAI, type DbMessage } from "@/services/api";
 import {
   ArrowUp,
-  Code2,
+  BookOpen,
+  Briefcase,
+  ChevronDown,
+  Coins,
   Globe,
   Paperclip,
   Sparkles,
-  User,
+  TrendingUp,
   X,
-  ChevronDown,
 } from "lucide-react";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import {
@@ -32,32 +34,34 @@ type ChatPanelProps = {
 
 const SUGGESTIONS = [
   {
-    title: "Search codebase",
+    title: "Analyze market trends",
     description:
-      "Locate where specific symbols, components, or files are defined.",
+      "Get insights on current trends, sector moves, and indicators.",
     prompt:
-      "Search my codebase for where ... is defined or used and explain its role.",
-    icon: Globe,
+      "Analyze current market trends in the technology sector vs the energy sector.",
+    icon: TrendingUp,
   },
   {
-    title: "Explain code structure",
-    description: "Understand complex business logic, components, or functions.",
-    prompt: "Explain the structure and main logic of the file: ",
-    icon: Code2,
+    title: "De-jargon financial terms",
+    description: "Understand complex corporate finance metrics easily.",
+    prompt:
+      "Explain the difference between EBITDA, operating cash flow, and free cash flow.",
+    icon: Coins,
   },
   {
-    title: "Review for bugs",
+    title: "Optimize portfolio strategy",
     description:
-      "Scan code for potential bugs, security issues, or refactoring ideas.",
+      "Learn core principles of asset allocation and diversification.",
     prompt:
-      "Scan my codebase for potential bugs, security vulnerabilities, or performance bottlenecks.",
-    icon: Sparkles,
+      "What are the core strategies for building a growth-focused, diversified investment portfolio?",
+    icon: Briefcase,
   },
   {
-    title: "Write unit tests",
-    description: "Generate comprehensive tests with edge cases for your logic.",
-    prompt: "Write comprehensive unit tests for ... including edge cases.",
-    icon: User,
+    title: "Evaluate financial health",
+    description: "Analyze company balance sheets, ratios, and risk factors.",
+    prompt:
+      "How do I check a company's liquidity and debt safety using its balance sheet?",
+    icon: BookOpen,
   },
 ];
 
@@ -167,7 +171,7 @@ export function ChatPanel({
     setAbortController(controller);
 
     try {
-      await askCodebase({
+      await askFinanceAI({
         question: currentQuestion,
         conversationId: conversationId || undefined,
         signal: controller.signal,
@@ -286,8 +290,8 @@ export function ChatPanel({
                   How can I help you today?
                 </h2>
                 <p className="text-muted-foreground text-sm mt-2 max-w-md leading-relaxed select-text">
-                  Ask questions, search for symbols, review code, or write tests
-                  for your codebase.
+                  Ask questions, analyze financial statements, explain market
+                  concepts, or explore strategies.
                 </p>
               </div>
 
@@ -400,7 +404,7 @@ export function ChatPanel({
               value={question}
               onChange={(e) => setQuestion(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Ask anything about your codebase..."
+              placeholder="Ask anything about financial markets, portfolios, or companies..."
               disabled={isLoading}
               style={{ height: question ? undefined : "40px" }}
               className="w-full resize-none bg-transparent outline-hidden py-2 px-3 border-0 focus:ring-0 placeholder:text-muted-foreground text-sm min-h-[40px] max-h-[160px] leading-relaxed text-foreground select-text"
@@ -481,8 +485,8 @@ export function ChatPanel({
           </form>
 
           <p className="text-[10px] text-center text-muted-foreground mt-3 select-text">
-            Ask Your Codebase AI can make mistakes. Verify critical files and
-            logic.
+            Finance AI can make mistakes. Verify critical details and consult a
+            certified financial advisor before investing.
           </p>
         </div>
       </div>

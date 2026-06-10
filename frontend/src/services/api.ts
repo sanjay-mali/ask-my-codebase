@@ -32,7 +32,7 @@ export type ConversationItem = {
   createAt: string;
 };
 
-type AskCodebaseOptions = {
+type AskFinanceAIOptions = {
   question: string;
   conversationId?: string;
   onChunk: (answer: string) => void;
@@ -148,13 +148,13 @@ export async function updateConversationTitle(
   return response.conversation;
 }
 
-export async function askCodebase({
+export async function askFinanceAI({
   question,
   conversationId,
   onChunk,
   onConversationId,
   signal,
-}: AskCodebaseOptions) {
+}: AskFinanceAIOptions) {
   const response = await fetch(`${API_BASE_URL}/ask`, {
     method: "POST",
     credentials: "include",

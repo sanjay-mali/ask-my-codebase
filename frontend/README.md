@@ -1,6 +1,6 @@
-# Ask Your Codebase Frontend
+# Finance AI Frontend
 
-React chat UI for the Ask Your Codebase backend.
+React chat UI for the Finance AI assistant.
 
 ## Install
 

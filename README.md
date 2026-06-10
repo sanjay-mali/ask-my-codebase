@@ -1,9 +1,14 @@
-# Ask Your Codebase Backend
+# Finance AI
 
-Backend API for indexing code into Qdrant and answering questions with Gemini.
+A ChatGPT-like conversational assistant tailored for financial analysis, portfolio strategies, market explanations, and personal finance optimization.
 
-## About project.
+## About the Project
 
-This is a RAG (Retrieval-Augmented Generation) pipeline that indexes your codebase, generates embeddings, and stores them in Qdrant. When a user submits a query, the system retrieves the most relevant code context from the indexed codebase and provides it to Gemini to generate a response.
+Finance AI helps users understand and analyze complex financial data, corporate statements, stock indicators, and investment strategies. It is powered by Gemini and connects to a backend vector database (Qdrant) for retrieving specific financial contexts.
 
-The assistant is designed to answer questions only from the indexed codebase and does not rely on external knowledge or context. This is the initial and basic version of the system..
+Key capabilities:
+
+- Interactive financial chat & expert Q&A.
+- Explains corporate finance metrics (EBITDA, P/E, Cash Flows) with step-by-step logic.
+- Analyzes market trends and outlines sector opportunities/risks.
+- Integrates with vector storage for analyzing custom financial documents.

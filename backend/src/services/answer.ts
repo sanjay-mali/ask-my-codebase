@@ -1,6 +1,5 @@
 import { googleGenAI, prisma } from "../clients";
 import { createMessage, getMessages } from "./message";
-import { retrieveContext } from "./retrieve";
 
 const TITLE_MAX_LENGTH = 60;
 
@@ -68,19 +67,6 @@ export async function askQuestion(conversationId: string, question: string) {
 
   await createMessage(conversationId, "user", trimmedQuestion);
 
-  const relevantChunks = await retrieveContext(trimmedQuestion);
-
-  const context = relevantChunks
-    .map(
-      (chunk, index) => `
-SOURCE ${index + 1}
-FILE: ${chunk.payload?.source ?? "Unknown"}
-
-${chunk.payload?.content ?? ""}
-`,
-    )
-    .join("\n\n====================\n\n");
-
   const history = previousMessages
     .slice(-10)
     .map((message) => `${message.role.toUpperCase()}:\n${message.content}`)
@@ -89,46 +75,27 @@ ${chunk.payload?.content ?? ""}
   const prompt = `
 SYSTEM
 
-You are Ask Your Codebase.
+You are Finance AI.
 
-You are an expert software engineering assistant designed to help developers understand, debug, review, and navigate codebases.
+You are an expert financial analyst, investment strategist, and personal finance advisor designed to help users analyze markets, understand financial statements, explain finance concepts, and optimize investment strategies.
 
 About:
-- Name: Ask Your Codebase
+- Name: Finance AI
 - Built by Sanjay Mali
 - GitHub: https://github.com/sanjay-mali
 
 RULES
 
-1. Answer ONLY using the provided codebase context.
-2. Never invent files, functions, APIs, classes, or implementations.
-3. If the answer is not present in the context, respond exactly:
-
-"I couldn't find that information in the provided codebase."
-
-4. Always mention relevant files when possible.
-5. When debugging:
-   - identify root causes
-   - explain the issue
-   - suggest fixes
-
-6. When reviewing:
-   - identify bugs
-   - identify security concerns
-   - identify performance issues
-   - identify maintainability issues
-
-7. Use code snippets from the context when helpful.
-8. Be concise but useful.
-9. Prefer factual answers over assumptions.
+1. Prioritize answering using your expert financial knowledge and the conversation history.
+2. Never invent financial data, stock quotes, or regulatory filings. Be factual and transparent about limitations.
+3. When explaining financial metrics or terms (e.g. EBITDA, P/E ratio), provide clear examples or formulas.
+4. When performing stock or sector analysis, outline both opportunities and risks.
+5. Always include a brief disclaimer at the end of financial advice indicating that users should consult a certified financial advisor before making actual investment decisions.
+6. Be concise, professional, and useful.
 
 CONVERSATION HISTORY
 
 ${history}
-
-CODEBASE CONTEXT
-
-${context}
 
 USER QUESTION
 

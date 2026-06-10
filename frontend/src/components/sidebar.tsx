@@ -2,7 +2,7 @@ import {
   LogOut,
   Plus,
   Settings,
-  Sparkles,
+  TrendingUp,
   Trash2,
   User,
   User2,
@@ -116,10 +116,10 @@ export function AppSidebar({
       <SidebarHeader className="relative flex flex-row items-center justify-between mt-3 px-3 pb-2">
         <div className="flex items-center gap-2 font-semibold text-sidebar-foreground animate-in fade-in duration-300">
           <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground shrink-0 border border-sidebar-border shadow-xs">
-            <Sparkles className="size-4.5" />
+            <TrendingUp className="size-4.5" />
           </div>
           <span className="truncate text-sm tracking-wide group-data-[state=collapsed]:hidden">
-            Ask Your Codebase
+            Finance AI
           </span>
         </div>
       </SidebarHeader>
