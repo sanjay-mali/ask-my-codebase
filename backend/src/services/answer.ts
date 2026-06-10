@@ -28,11 +28,13 @@ ${question}
 `,
       config: {
         temperature: 0.2,
-        maxOutputTokens: 20,
+        maxOutputTokens: 190,
       },
     });
 
-    return response.text ?? "";
+    let title = response.text?.trim() ?? "";
+    title = title.replace(/^["']|["']$/g, "").trim();
+    return title || fallbackTitle(question);
   } catch {
     return fallbackTitle(question);
   }
@@ -48,7 +50,11 @@ export async function askQuestion(conversationId: string, question: string) {
   const previousMessages = await getMessages(conversationId);
 
   if (previousMessages.length === 0) {
-    const title = await generateConversationTitle(trimmedQuestion);
+    let title = await generateConversationTitle(trimmedQuestion);
+    title = title.trim();
+    if (!title) {
+      title = fallbackTitle(trimmedQuestion);
+    }
 
     await prisma.conversation.update({
       where: {

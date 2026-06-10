@@ -1,8 +1,3 @@
-type AskCodebaseOptions = {
-  question: string;
-  onChunk: (answer: string) => void;
-};
-
 export type AuthUser = {
   id: string;
   name: string;
@@ -20,6 +15,29 @@ export type RegisterInput = LoginInput & {
 
 type AuthResponse = {
   user: AuthUser;
+};
+
+export type DbMessage = {
+  id: string;
+  conversationId: string;
+  role: "user" | "assistant" | "system";
+  content: string;
+  createAt: string;
+};
+
+export type ConversationItem = {
+  id: string;
+  title: string | null;
+  userId: string;
+  createAt: string;
+};
+
+type AskCodebaseOptions = {
+  question: string;
+  conversationId?: string;
+  onChunk: (answer: string) => void;
+  onConversationId?: (conversationId: string) => void;
+  signal?: AbortSignal;
 };
 
 const runtimeProcess = typeof process === "undefined" ? undefined : process;
@@ -95,18 +113,65 @@ export async function logoutUser() {
   });
 }
 
-export async function askCodebase({ question, onChunk }: AskCodebaseOptions) {
+export async function getConversations() {
+  const response = await requestJson<{ conversations: ConversationItem[] }>(
+    "/conversation/all",
+  );
+  return response.conversations;
+}
+
+export async function getConversationMessages(conversationId: string) {
+  const response = await requestJson<{ messages: DbMessage[] }>(
+    `/conversation/${conversationId}/messages`,
+  );
+  return response.messages;
+}
+
+export async function deleteConversation(conversationId: string) {
+  await fetch(`${API_BASE_URL}/conversation/${conversationId}`, {
+    method: "DELETE",
+    credentials: "include",
+  });
+}
+
+export async function updateConversationTitle(
+  conversationId: string,
+  title: string,
+) {
+  const response = await requestJson<{ conversation: ConversationItem }>(
+    `/conversation/${conversationId}`,
+    {
+      method: "PATCH",
+      body: JSON.stringify({ title }),
+    },
+  );
+  return response.conversation;
+}
+
+export async function askCodebase({
+  question,
+  conversationId,
+  onChunk,
+  onConversationId,
+  signal,
+}: AskCodebaseOptions) {
   const response = await fetch(`${API_BASE_URL}/ask`, {
     method: "POST",
     credentials: "include",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ q: question }),
+    body: JSON.stringify({ q: question, conversationId }),
+    signal,
   });
 
   if (!response.ok) {
     throw new Error(await readErrorMessage(response));
+  }
+
+  const responseConversationId = response.headers.get("X-Conversation-Id");
+  if (responseConversationId && onConversationId) {
+    onConversationId(responseConversationId);
   }
 
   if (!response.body) {

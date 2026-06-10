@@ -19,8 +19,12 @@ conversationRouter.get("/all", async (req, res) => {
 
   try {
     const conversations = await getUserConversations(userId);
+    const sanitizedConversations = conversations.map((c) => ({
+      ...c,
+      title: c.title?.trim() || "Untitled Chat",
+    }));
 
-    res.json({ conversations });
+    res.json({ conversations: sanitizedConversations });
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Unable to load conversations.";
@@ -46,7 +50,12 @@ conversationRouter.get("/:conversationId", async (req, res) => {
       return;
     }
 
-    res.json({ conversation });
+    const sanitizedConversation = {
+      ...conversation,
+      title: conversation.title?.trim() || "Untitled Chat",
+    };
+
+    res.json({ conversation: sanitizedConversation });
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Unable to load conversation.";
@@ -79,7 +88,12 @@ conversationRouter.patch("/:conversationId", async (req, res) => {
       userId,
     );
 
-    res.json({ conversation: updatedConversation });
+    const sanitizedConversation = {
+      ...updatedConversation,
+      title: updatedConversation.title?.trim() || "Untitled Chat",
+    };
+
+    res.json({ conversation: sanitizedConversation });
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Unable to update conversation.";

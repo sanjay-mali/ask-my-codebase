@@ -56,6 +56,8 @@ askRouter.post("/", async (req, res) => {
     res.setHeader("Content-Type", "text/plain; charset=utf-8");
     res.setHeader("Cache-Control", "no-cache");
     res.setHeader("Connection", "keep-alive");
+    res.setHeader("X-Conversation-Id", conversationId);
+    res.setHeader("Access-Control-Expose-Headers", "X-Conversation-Id");
 
     for await (const chunk of response) {
       res.write(chunk);
