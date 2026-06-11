@@ -15,7 +15,7 @@ import {
   Settings,
 } from "lucide-react";
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { SettingsModal, STORAGE_KEY_API_KEYS } from "./SettingsModal";
+import { SettingsModal, STORAGE_KEY_API_KEYS, type ApiKeys } from "./SettingsModal";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -186,7 +186,7 @@ export function ChatPanel({
     const controller = new AbortController();
     setAbortController(controller);
 
-    let apiKeys = {};
+    let apiKeys = {} as ApiKeys;
     const stored = sessionStorage.getItem(STORAGE_KEY_API_KEYS);
     if (stored) {
       try {
@@ -198,8 +198,8 @@ export function ChatPanel({
       await askFinanceAI({
         question: currentQuestion,
         conversationId: conversationId || undefined,
-        baseModel: activeModel.provider,
-        modelName: activeModel.id,
+        baseModel: activeModel?.provider,
+        modelName: activeModel?.id,
         apiKeys,
         signal: controller.signal,
         onConversationId(newId) {
@@ -422,7 +422,7 @@ export function ChatPanel({
                       variant="ghost"
                       className="gap-1 font-medium text-muted-foreground hover:text-foreground text-[13px] hover:bg-muted/60 rounded-lg h-8 px-2.5 transition-colors shrink-0 cursor-pointer"
                     >
-                      <span>{activeModel.name}</span>
+                      <span>{activeModel?.name}</span>
                       <ChevronDown className="size-3" />
                     </Button>
                   </DropdownMenuTrigger>

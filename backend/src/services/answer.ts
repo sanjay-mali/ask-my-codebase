@@ -145,6 +145,13 @@ export async function askQuestion(
 
       if (fullResponse) {
         await createMessage(conversationId, "assistant", fullResponse);
+      } else {
+        await createMessage(
+          conversationId,
+          "assistant",
+          "[No response from provider]",
+        );
+        throw new Error("No response from provider");
       }
 
       console.info({

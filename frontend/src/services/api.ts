@@ -1,3 +1,5 @@
+import type { ApiKeys } from "../components/chat/SettingsModal";
+
 export type AuthUser = {
   id: string;
   name: string;
@@ -37,7 +39,7 @@ type AskFinanceAIOptions = {
   conversationId?: string;
   baseModel?: string;
   modelName?: string;
-  apiKeys?: any;
+  apiKeys?: ApiKeys;
   onChunk: (answer: string) => void;
   onConversationId?: (conversationId: string) => void;
   signal?: AbortSignal;

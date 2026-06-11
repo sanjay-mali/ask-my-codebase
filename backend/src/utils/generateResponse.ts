@@ -24,22 +24,18 @@ export async function generateResponseStream(
         throw new Error("OpenAI API key is required but not provided.");
       }
       const client = new OpenAI({ apiKey: apiKeys.openai });
-      const stream = await client.responses.stream({
+      const stream = await client.chat.completions.create({
         model: modelName,
-        input: prompt,
+        messages: [{ role: "user", content: prompt }],
+        stream: true,
       });
 
       return (async function* () {
-        try {
-          for await (const event of stream) {
-            if (event.type === "response.output_text.delta") {
-              yield {
-                text: event.delta,
-              };
-            }
+        for await (const chunk of stream) {
+          const content = chunk.choices[0]?.delta?.content;
+          if (content) {
+            yield { text: content };
           }
-        } finally {
-          await stream.done();
         }
       })();
     }
@@ -51,7 +47,7 @@ export async function generateResponseStream(
       const client = new GoogleGenAI({ apiKey: apiKeys.gemini });
       const stream = await client.models.generateContentStream({
         model: modelName,
-        contents: prompt,
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
         config: {
           temperature: 0.3,
           topP: 0.9,

@@ -2,6 +2,7 @@ import { Router } from "express";
 import { env } from "../config/env";
 import { askQuestion } from "../services/answer";
 import { createConversation, getConversation } from "../services/conversation";
+import { BaseModel } from "../utils/generateResponse";
 
 export const askRouter = Router();
 
@@ -11,6 +12,11 @@ askRouter.post("/", async (req, res) => {
   const baseModel = req.body.baseModel;
   const modelName = req.body.modelName;
   const apiKeys = req.body.apiKeys || {};
+
+  if (!Object.values(BaseModel).includes(baseModel)) {
+    res.status(400).json({ error: "Invalid baseModel." });
+    return;
+  }
 
   if (!userId) {
     res.status(401).json({ error: "Unauthorized" });

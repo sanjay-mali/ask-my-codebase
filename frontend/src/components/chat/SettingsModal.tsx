@@ -55,9 +55,9 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
         <DialogHeader>
           <DialogTitle>API Settings</DialogTitle>
           <DialogDescription>
-            Enter your API keys. They are stored securely in your browser's
-            sessionStorage and sent to the server. They are automatically
-            cleared when you close the tab.
+            Enter your API keys. They are stored temporarily in your browser's
+            sessionStorage (in plaintext) and are accessible to page scripts.
+            They will be cleared when you close the tab.
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col space-y-4 py-4">
