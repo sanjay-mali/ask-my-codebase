@@ -15,7 +15,11 @@ import {
   Settings,
 } from "lucide-react";
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { SettingsModal, STORAGE_KEY_API_KEYS, type ApiKeys } from "./SettingsModal";
+import {
+  SettingsModal,
+  STORAGE_KEY_API_KEYS,
+  type ApiKeys,
+} from "./SettingsModal";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,6 +27,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { SidebarTrigger } from "@/components/ui/sidebar";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 type ChatPanelProps = {
   isAuthenticated: boolean;
@@ -266,19 +276,30 @@ export function ChatPanel({
   return (
     <div className="h-full flex flex-col bg-background relative overflow-hidden select-none">
       <header className="h-14 border-b border-border flex items-center justify-between px-4 shrink-0 bg-background/95 backdrop-blur-md sticky top-0 z-20">
-        <div className="flex items-center gap-1.5">
-          <SidebarTrigger className="size-9 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/65 transition-colors cursor-pointer" />
-        </div>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          onClick={() => setIsSettingsOpen(true)}
-          className="size-8 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors cursor-pointer"
-          title="API Settings"
-        >
-          <Settings className="size-4" />
-        </Button>
+        <TooltipProvider delayDuration={300}>
+          <div className="flex items-center gap-1.5">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <SidebarTrigger className="size-9 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/65 transition-colors cursor-pointer" />
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs">Toggle Sidebar</TooltipContent>
+            </Tooltip>
+          </div>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsSettingsOpen(true)}
+                className="size-8 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors cursor-pointer"
+              >
+                <Settings className="size-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="text-xs">API Settings</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </header>
 
       <div className="flex-1 overflow-y-auto w-full min-h-0 py-4 flex flex-col">
@@ -452,46 +473,66 @@ export function ChatPanel({
                   onChange={handleFileChange}
                   className="hidden"
                 />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={triggerUpload}
-                  className="size-8 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors cursor-pointer"
-                  title="Upload files"
-                >
-                  <Paperclip className="size-4" />
-                </Button>
+                <TooltipProvider delayDuration={300}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={triggerUpload}
+                        className="size-8 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors cursor-pointer"
+                      >
+                        <Paperclip className="size-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="text-xs">
+                      Upload files
+                    </TooltipContent>
+                  </Tooltip>
 
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setIsSearchActive(!isSearchActive)}
-                  className={`size-8 rounded-full transition-all duration-150 cursor-pointer ${
-                    isSearchActive
-                      ? "bg-foreground text-background"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
-                  }`}
-                  title="Web Search"
-                >
-                  <Globe className="size-4" />
-                </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setIsSearchActive(!isSearchActive)}
+                        className={`size-8 rounded-full transition-all duration-150 cursor-pointer ${
+                          isSearchActive
+                            ? "bg-foreground text-background"
+                            : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                        }`}
+                      >
+                        <Globe className="size-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="text-xs">
+                      Web Search
+                    </TooltipContent>
+                  </Tooltip>
 
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setIsResearchActive(!isResearchActive)}
-                  className={`size-8 rounded-full transition-all duration-150 cursor-pointer ${
-                    isResearchActive
-                      ? "bg-foreground text-background"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
-                  }`}
-                  title="Deep Research"
-                >
-                  <Sparkles className="size-4" />
-                </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setIsResearchActive(!isResearchActive)}
+                        className={`size-8 rounded-full transition-all duration-150 cursor-pointer ${
+                          isResearchActive
+                            ? "bg-foreground text-background"
+                            : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                        }`}
+                      >
+                        <Sparkles className="size-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="text-xs">
+                      Deep Research
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
 
               {isLoading || abortController ? (
