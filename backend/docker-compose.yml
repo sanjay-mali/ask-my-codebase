@@ -1,0 +1,23 @@
+name: finance-ai-backend
+
+services:
+  qdrant:
+    image: qdrant/qdrant
+    ports:
+      - "6333:6333"
+    volumes:
+      - db-data:/var/lib/data
+  postgresql:
+    image: postgres:16
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: ask_your_codebase
+      POSTGRES_USER: ask
+      POSTGRES_PASSWORD: ask
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+volumes:
+  db-data:
+  postgres-data:
