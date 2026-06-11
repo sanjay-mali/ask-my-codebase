@@ -35,6 +35,9 @@ export type ConversationItem = {
 type AskFinanceAIOptions = {
   question: string;
   conversationId?: string;
+  baseModel?: string;
+  modelName?: string;
+  apiKeys?: any;
   onChunk: (answer: string) => void;
   onConversationId?: (conversationId: string) => void;
   signal?: AbortSignal;
@@ -151,6 +154,9 @@ export async function updateConversationTitle(
 export async function askFinanceAI({
   question,
   conversationId,
+  baseModel,
+  modelName,
+  apiKeys,
   onChunk,
   onConversationId,
   signal,
@@ -161,7 +167,13 @@ export async function askFinanceAI({
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ q: question, conversationId }),
+    body: JSON.stringify({
+      q: question,
+      conversationId,
+      baseModel,
+      modelName,
+      apiKeys,
+    }),
     signal,
   });
 

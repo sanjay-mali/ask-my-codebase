@@ -12,8 +12,10 @@ import {
   Sparkles,
   TrendingUp,
   X,
+  Settings,
 } from "lucide-react";
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import { SettingsModal, STORAGE_KEY_API_KEYS } from "./SettingsModal";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -31,6 +33,19 @@ type ChatPanelProps = {
   setMessages: React.Dispatch<React.SetStateAction<DbMessage[]>>;
   onNewChat: () => void;
 };
+
+const AVAILABLE_MODELS = [
+  { id: "gemini-3.5-flash", name: "Gemini 3.5 Flash", provider: "gemini" },
+  { id: "gemini-3.1-pro", name: "Gemini 3.1 Pro", provider: "gemini" },
+  { id: "gemini-2.5-flash", name: "Gemini 2.5 Flash", provider: "gemini" },
+  { id: "gpt-4o", name: "GPT-4o", provider: "openai" },
+  { id: "gpt-4o-mini", name: "GPT-4o Mini", provider: "openai" },
+  {
+    id: "claude-3-5-sonnet-20240620",
+    name: "Claude 3.5 Sonnet",
+    provider: "anthropic",
+  },
+];
 
 const SUGGESTIONS = [
   {
@@ -75,7 +90,8 @@ export function ChatPanel({
 }: ChatPanelProps) {
   const [question, setQuestion] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [activeModel, setActiveModel] = useState("gemini-3.5-flash");
+  const [activeModel, setActiveModel] = useState(AVAILABLE_MODELS[0]);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isSearchActive, setIsSearchActive] = useState(false);
   const [isResearchActive, setIsResearchActive] = useState(false);
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
@@ -170,10 +186,21 @@ export function ChatPanel({
     const controller = new AbortController();
     setAbortController(controller);
 
+    let apiKeys = {};
+    const stored = sessionStorage.getItem(STORAGE_KEY_API_KEYS);
+    if (stored) {
+      try {
+        apiKeys = JSON.parse(stored);
+      } catch (e) {}
+    }
+
     try {
       await askFinanceAI({
         question: currentQuestion,
         conversationId: conversationId || undefined,
+        baseModel: activeModel.provider,
+        modelName: activeModel.id,
+        apiKeys,
         signal: controller.signal,
         onConversationId(newId) {
           onConversationCreated(newId);
@@ -241,41 +268,17 @@ export function ChatPanel({
       <header className="h-14 border-b border-border flex items-center justify-between px-4 shrink-0 bg-background/95 backdrop-blur-md sticky top-0 z-20">
         <div className="flex items-center gap-1.5">
           <SidebarTrigger className="size-9 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/65 transition-colors cursor-pointer" />
-          <div className="h-4 w-px bg-border mx-1 shrink-0" />
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                type="button"
-                variant="ghost"
-                className="gap-1 font-semibold text-muted-foreground hover:text-foreground text-xs hover:bg-muted/60 rounded-lg h-9 px-2.5 transition-colors shrink-0 cursor-pointer"
-              >
-                <span>
-                  {activeModel === "gemini-3.5-flash"
-                    ? "Gemini 3.5"
-                    : "Gemini 3.1"}
-                </span>
-                <ChevronDown className="size-3.5" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent
-              align="start"
-              className="w-48 bg-popover border border-border text-popover-foreground shadow-md"
-            >
-              <DropdownMenuItem
-                onClick={() => setActiveModel("gemini-3.5-flash")}
-                className="cursor-pointer"
-              >
-                Gemini 3.5 Flash
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => setActiveModel("gemini-3.1-pro")}
-                className="cursor-pointer"
-              >
-                Gemini 3.1 Pro (High)
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
         </div>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          onClick={() => setIsSettingsOpen(true)}
+          className="size-8 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors cursor-pointer"
+          title="API Settings"
+        >
+          <Settings className="size-4" />
+        </Button>
       </header>
 
       <div className="flex-1 overflow-y-auto w-full min-h-0 py-4 flex flex-col">
@@ -412,6 +415,36 @@ export function ChatPanel({
 
             <div className="flex items-center justify-between px-2 pt-1.5 border-t border-border/40 mt-1">
               <div className="flex items-center gap-1 flex-wrap">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="gap-1 font-medium text-muted-foreground hover:text-foreground text-[13px] hover:bg-muted/60 rounded-lg h-8 px-2.5 transition-colors shrink-0 cursor-pointer"
+                    >
+                      <span>{activeModel.name}</span>
+                      <ChevronDown className="size-3" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    align="start"
+                    side="top"
+                    className="w-48 bg-popover border border-border text-popover-foreground shadow-md mb-2"
+                  >
+                    {AVAILABLE_MODELS.map((model) => (
+                      <DropdownMenuItem
+                        key={model.id}
+                        onClick={() => setActiveModel(model)}
+                        className="cursor-pointer"
+                      >
+                        {model.name}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                <div className="h-4 w-px bg-border mx-1 shrink-0" />
+
                 <input
                   type="file"
                   multiple
@@ -490,6 +523,10 @@ export function ChatPanel({
           </p>
         </div>
       </div>
+      <SettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+      />
     </div>
   );
 }

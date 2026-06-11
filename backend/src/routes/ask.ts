@@ -8,6 +8,9 @@ export const askRouter = Router();
 askRouter.post("/", async (req, res) => {
   const question = typeof req.body?.q === "string" ? req.body.q.trim() : "";
   const userId = req.user?.id;
+  const baseModel = req.body.baseModel;
+  const modelName = req.body.modelName;
+  const apiKeys = req.body.apiKeys || {};
 
   if (!userId) {
     res.status(401).json({ error: "Unauthorized" });
@@ -51,7 +54,13 @@ askRouter.post("/", async (req, res) => {
       conversationId = conversation.id;
     }
 
-    const response = await askQuestion(conversationId, question);
+    const response = await askQuestion(
+      conversationId,
+      question,
+      baseModel,
+      modelName,
+      apiKeys,
+    );
 
     res.setHeader("Content-Type", "text/plain; charset=utf-8");
     res.setHeader("Cache-Control", "no-cache");

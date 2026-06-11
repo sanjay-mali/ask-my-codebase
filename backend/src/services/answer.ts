@@ -1,19 +1,24 @@
-import { googleGenAI, prisma } from "../clients";
+import { prisma } from "../clients";
+import { BaseModel, generateResponseStream } from "../utils/generateResponse";
+import { system_prompt } from "../utils/system_prompt";
 import { createMessage, getMessages } from "./message";
 
 const TITLE_MAX_LENGTH = 60;
 
-function fallbackTitle(question: string) {
+function fallbackTitle(question: string): string {
   return question.length > TITLE_MAX_LENGTH
     ? `${question.slice(0, TITLE_MAX_LENGTH).trim()}...`
     : question;
 }
 
-async function generateConversationTitle(question: string) {
+async function generateConversationTitle(
+  question: string,
+  baseModel: BaseModel,
+  modelName: string,
+  apiKeys: Record<string, string>,
+): Promise<string> {
   try {
-    const response = await googleGenAI.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: `
+    const prompt = `
 Generate a concise chat title for this first user message.
 
 Rules:
@@ -24,22 +29,65 @@ Rules:
 
 Message:
 ${question}
-`,
-      config: {
-        temperature: 0.2,
-        maxOutputTokens: 190,
-      },
-    });
+`;
 
-    let title = response.text?.trim() ?? "";
+    const stream = await generateResponseStream(
+      prompt,
+      baseModel,
+      modelName,
+      apiKeys,
+    );
+    let title = "";
+    for await (const chunk of stream) {
+      title += chunk.text;
+    }
+
     title = title.replace(/^["']|["']$/g, "").trim();
+
     return title || fallbackTitle(question);
-  } catch {
+  } catch (err) {
+    console.error("Title generation failed:", err);
     return fallbackTitle(question);
   }
 }
 
-export async function askQuestion(conversationId: string, question: string) {
+function buildPrompt(
+  history: Awaited<ReturnType<typeof getMessages>>,
+  question: string,
+): string {
+  const conversationHistory = history
+    .slice(-10)
+    .map((message) =>
+      `
+<${message.role}>
+${message.content}
+</${message.role}>
+`.trim(),
+    )
+    .join("\n\n");
+
+  return `
+<SYSTEM>
+${system_prompt}
+</SYSTEM>
+
+<CONVERSATION_HISTORY>
+${conversationHistory}
+</CONVERSATION_HISTORY>
+
+<CURRENT_USER_MESSAGE>
+${question}
+</CURRENT_USER_MESSAGE>
+`.trim();
+}
+
+export async function askQuestion(
+  conversationId: string,
+  question: string,
+  baseModel: BaseModel,
+  modelName: string,
+  apiKeys: Record<string, string> = {},
+) {
   const trimmedQuestion = question.trim();
 
   if (!trimmedQuestion) {
@@ -49,7 +97,12 @@ export async function askQuestion(conversationId: string, question: string) {
   const previousMessages = await getMessages(conversationId);
 
   if (previousMessages.length === 0) {
-    let title = await generateConversationTitle(trimmedQuestion);
+    let title = await generateConversationTitle(
+      trimmedQuestion,
+      baseModel,
+      modelName,
+      apiKeys,
+    );
     title = title.trim();
     if (!title) {
       title = fallbackTitle(trimmedQuestion);
@@ -67,64 +120,43 @@ export async function askQuestion(conversationId: string, question: string) {
 
   await createMessage(conversationId, "user", trimmedQuestion);
 
-  const history = previousMessages
-    .slice(-10)
-    .map((message) => `${message.role.toUpperCase()}:\n${message.content}`)
-    .join("\n\n");
+  const prompt = buildPrompt(previousMessages, trimmedQuestion);
 
-  const prompt = `
-SYSTEM
-
-You are Finance AI.
-
-You are an expert financial analyst, investment strategist, and personal finance advisor designed to help users analyze markets, understand financial statements, explain finance concepts, and optimize investment strategies.
-
-About:
-- Name: Finance AI
-- Built by Sanjay Mali
-- GitHub: https://github.com/sanjay-mali
-
-RULES
-
-1. Prioritize answering using your expert financial knowledge and the conversation history.
-2. Never invent financial data, stock quotes, or regulatory filings. Be factual and transparent about limitations.
-3. When explaining financial metrics or terms (e.g. EBITDA, P/E ratio), provide clear examples or formulas.
-4. When performing stock or sector analysis, outline both opportunities and risks.
-5. Always include a brief disclaimer at the end of financial advice indicating that users should consult a certified financial advisor before making actual investment decisions.
-6. Be concise, professional, and useful.
-
-CONVERSATION HISTORY
-
-${history}
-
-USER QUESTION
-
-${trimmedQuestion}
-`;
-
-  const stream = await googleGenAI.models.generateContentStream({
-    model: "gemini-2.5-flash",
-    contents: prompt,
-    config: {
-      temperature: 0.3,
-      topP: 0.9,
-    },
-  });
-
-  let fullResponse = "";
+  const stream = await generateResponseStream(
+    prompt,
+    baseModel,
+    modelName,
+    apiKeys,
+  );
 
   async function* responseGenerator(): AsyncGenerator<string> {
-    for await (const chunk of stream) {
-      const text = chunk.text ?? "";
+    const chunks: string[] = [];
 
-      if (!text) continue;
-      fullResponse += text;
+    const startedAt = Date.now();
 
-      yield text;
-    }
+    try {
+      for await (const chunk of stream) {
+        chunks.push(chunk.text);
 
-    if (fullResponse.trim()) {
-      await createMessage(conversationId, "assistant", fullResponse);
+        yield chunk.text;
+      }
+
+      const fullResponse = chunks.join("").trim();
+
+      if (fullResponse) {
+        await createMessage(conversationId, "assistant", fullResponse);
+      }
+
+      console.info({
+        provider: baseModel,
+        model: modelName,
+        durationMs: Date.now() - startedAt,
+        responseLength: fullResponse.length,
+      });
+    } catch (error) {
+      console.error(error);
+
+      yield "\n\nSorry, something went wrong.";
     }
   }
 

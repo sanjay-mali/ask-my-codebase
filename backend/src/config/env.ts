@@ -30,7 +30,6 @@ function readNumberEnv(name: string, fallback: number) {
 
 export const env = {
   port: readNumberEnv("PORT", DEFAULT_PORT),
-  googleApiKey: readRequiredEnv("GOOGLE_API_KEY"),
   qdrantUrl: readRequiredEnv("QDRANT_URL"),
   qdrantCollection: process.env.QDRANT_COLLECTION?.trim() || DEFAULT_COLLECTION,
   corsOrigin: process.env.CORS_ORIGIN?.trim() || "*",
