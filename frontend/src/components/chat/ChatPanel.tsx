@@ -3,14 +3,10 @@ import { Button } from "@/components/ui/button";
 import { askFinanceAI, type DbMessage } from "@/services/api";
 import {
   ArrowUp,
-  BookOpen,
-  Briefcase,
   ChevronDown,
-  Coins,
   Globe,
   Paperclip,
   Sparkles,
-  TrendingUp,
   X,
   Settings,
 } from "lucide-react";
@@ -33,6 +29,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { AVAILABLE_MODELS, SUGGESTIONS } from "@/lib/data";
 
 type ChatPanelProps = {
   isAuthenticated: boolean;
@@ -43,52 +40,6 @@ type ChatPanelProps = {
   setMessages: React.Dispatch<React.SetStateAction<DbMessage[]>>;
   onNewChat: () => void;
 };
-
-const AVAILABLE_MODELS = [
-  { id: "gemini-3.5-flash", name: "Gemini 3.5 Flash", provider: "gemini" },
-  { id: "gemini-3.1-pro", name: "Gemini 3.1 Pro", provider: "gemini" },
-  { id: "gemini-2.5-flash", name: "Gemini 2.5 Flash", provider: "gemini" },
-  { id: "gpt-4o", name: "GPT-4o", provider: "openai" },
-  { id: "gpt-4o-mini", name: "GPT-4o Mini", provider: "openai" },
-  {
-    id: "claude-3-5-sonnet-20240620",
-    name: "Claude 3.5 Sonnet",
-    provider: "anthropic",
-  },
-];
-
-const SUGGESTIONS = [
-  {
-    title: "Analyze market trends",
-    description:
-      "Get insights on current trends, sector moves, and indicators.",
-    prompt:
-      "Analyze current market trends in the technology sector vs the energy sector.",
-    icon: TrendingUp,
-  },
-  {
-    title: "De-jargon financial terms",
-    description: "Understand complex corporate finance metrics easily.",
-    prompt:
-      "Explain the difference between EBITDA, operating cash flow, and free cash flow.",
-    icon: Coins,
-  },
-  {
-    title: "Optimize portfolio strategy",
-    description:
-      "Learn core principles of asset allocation and diversification.",
-    prompt:
-      "What are the core strategies for building a growth-focused, diversified investment portfolio?",
-    icon: Briefcase,
-  },
-  {
-    title: "Evaluate financial health",
-    description: "Analyze company balance sheets, ratios, and risk factors.",
-    prompt:
-      "How do I check a company's liquidity and debt safety using its balance sheet?",
-    icon: BookOpen,
-  },
-];
 
 export function ChatPanel({
   isAuthenticated,
@@ -148,6 +99,7 @@ export function ChatPanel({
       const filesArray = Array.from(event.target.files);
       setAttachedFiles((prev) => [...prev, ...filesArray]);
     }
+    event.target.value = "";
   };
 
   const removeFile = (index: number) => {
@@ -163,7 +115,7 @@ export function ChatPanel({
   };
 
   const sendPrompt = async (promptText: string) => {
-    const currentQuestion = promptText.trim();
+    const currentQuestion = promptText.trim() || (attachedFiles.length > 0 ? "Please analyze the attached files." : "");
     if (!currentQuestion) return;
 
     if (!isAuthenticated) {
@@ -204,6 +156,29 @@ export function ChatPanel({
       } catch (e) {}
     }
 
+    const base64Files = await Promise.all(
+      attachedFiles.map(
+        (file) =>
+          new Promise<{ name: string; mimeType: string; data: string }>(
+            (resolve) => {
+              const reader = new FileReader();
+              reader.onload = () => {
+                const result = reader.result as string;
+                const base64Data = result.split(",")[1];
+                resolve({
+                  name: file.name,
+                  mimeType: file.type,
+                  data: base64Data || "",
+                });
+              };
+              reader.readAsDataURL(file);
+            },
+          ),
+      ),
+    );
+
+    setAttachedFiles([]);
+
     try {
       await askFinanceAI({
         question: currentQuestion,
@@ -211,6 +186,7 @@ export function ChatPanel({
         baseModel: activeModel?.provider,
         modelName: activeModel?.id,
         apiKeys,
+        files: base64Files,
         signal: controller.signal,
         onConversationId(newId) {
           onConversationCreated(newId);
@@ -282,7 +258,9 @@ export function ChatPanel({
               <TooltipTrigger asChild>
                 <SidebarTrigger className="size-9 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/65 transition-colors cursor-pointer" />
               </TooltipTrigger>
-              <TooltipContent side="bottom" className="text-xs">Toggle Sidebar</TooltipContent>
+              <TooltipContent side="bottom" className="text-xs">
+                Toggle Sidebar
+              </TooltipContent>
             </Tooltip>
           </div>
           <Tooltip>
@@ -297,7 +275,9 @@ export function ChatPanel({
                 <Settings className="size-4" />
               </Button>
             </TooltipTrigger>
-            <TooltipContent side="bottom" className="text-xs">API Settings</TooltipContent>
+            <TooltipContent side="bottom" className="text-xs">
+              API Settings
+            </TooltipContent>
           </Tooltip>
         </TooltipProvider>
       </header>
@@ -469,6 +449,7 @@ export function ChatPanel({
                 <input
                   type="file"
                   multiple
+                  accept=".pdf,.doc,.docx,.txt,.csv,.md,.json"
                   ref={fileInputRef}
                   onChange={handleFileChange}
                   className="hidden"

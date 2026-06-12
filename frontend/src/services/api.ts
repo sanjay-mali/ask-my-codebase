@@ -40,6 +40,7 @@ type AskFinanceAIOptions = {
   baseModel?: string;
   modelName?: string;
   apiKeys?: ApiKeys;
+  files?: { name: string; mimeType: string; data: string }[];
   onChunk: (answer: string) => void;
   onConversationId?: (conversationId: string) => void;
   signal?: AbortSignal;
@@ -159,6 +160,7 @@ export async function askFinanceAI({
   baseModel,
   modelName,
   apiKeys,
+  files,
   onChunk,
   onConversationId,
   signal,
@@ -175,6 +177,7 @@ export async function askFinanceAI({
       baseModel,
       modelName,
       apiKeys,
+      files,
     }),
     signal,
   });

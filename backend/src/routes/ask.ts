@@ -1,8 +1,8 @@
 import { Router } from "express";
 import { env } from "../config/env";
-import { askQuestion } from "../services/answer";
 import { createConversation, getConversation } from "../services/conversation";
-import { BaseModel } from "../utils/generateResponse";
+import { runLangGraphFlow, BaseModel } from "../utils/langgraphAgent";
+import type { FileData } from "../utils/fileParser";
 
 export const askRouter = Router();
 
@@ -12,6 +12,7 @@ askRouter.post("/", async (req, res) => {
   const baseModel = req.body.baseModel;
   const modelName = req.body.modelName;
   const apiKeys = req.body.apiKeys || {};
+  const files: FileData[] = Array.isArray(req.body.files) ? req.body.files : [];
 
   if (!Object.values(BaseModel).includes(baseModel)) {
     res.status(400).json({ error: "Invalid baseModel." });
@@ -60,23 +61,26 @@ askRouter.post("/", async (req, res) => {
       conversationId = conversation.id;
     }
 
-    const response = await askQuestion(
-      conversationId,
-      question,
-      baseModel,
-      modelName,
-      apiKeys,
-    );
-
     res.setHeader("Content-Type", "text/plain; charset=utf-8");
     res.setHeader("Cache-Control", "no-cache");
     res.setHeader("Connection", "keep-alive");
     res.setHeader("X-Conversation-Id", conversationId);
     res.setHeader("Access-Control-Expose-Headers", "X-Conversation-Id");
 
-    for await (const chunk of response) {
-      res.write(chunk);
-    }
+    await runLangGraphFlow(
+      {
+        question,
+        userId,
+        conversationId,
+        baseModel: baseModel as BaseModel,
+        modelName,
+        apiKeys,
+        files,
+      },
+      (token) => {
+        res.write(token);
+      },
+    );
 
     res.end();
   } catch (error) {

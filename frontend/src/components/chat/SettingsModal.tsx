@@ -13,7 +13,6 @@ import { Label } from "@/components/ui/label";
 
 export type ApiKeys = {
   openai: string;
-  anthropic: string;
   gemini: string;
 };
 
@@ -27,7 +26,6 @@ type SettingsModalProps = {
 export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const [keys, setKeys] = useState<ApiKeys>({
     openai: "",
-    anthropic: "",
     gemini: "",
   });
 
@@ -84,31 +82,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               )}
             </div>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="anthropic">Anthropic API Key</Label>
-            <div className="relative">
-              <Input
-                id="anthropic"
-                type="password"
-                value={keys.anthropic}
-                onChange={(e) =>
-                  setKeys({ ...keys, anthropic: e.target.value })
-                }
-                placeholder="sk-ant-..."
-                className={keys.anthropic ? "pr-10" : ""}
-              />
-              {keys.anthropic && (
-                <button
-                  type="button"
-                  onClick={() => setKeys({ ...keys, anthropic: "" })}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-destructive transition-colors"
-                  title="Clear API Key"
-                >
-                  <Trash2 className="size-4" />
-                </button>
-              )}
-            </div>
-          </div>
+
           <div className="space-y-2">
             <Label htmlFor="gemini">Gemini API Key</Label>
             <div className="relative">
