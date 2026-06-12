@@ -115,7 +115,9 @@ export function ChatPanel({
   };
 
   const sendPrompt = async (promptText: string) => {
-    const currentQuestion = promptText.trim() || (attachedFiles.length > 0 ? "Please analyze the attached files." : "");
+    const currentQuestion =
+      promptText.trim() ||
+      (attachedFiles.length > 0 ? "Please analyze the attached files." : "");
     if (!currentQuestion) return;
 
     if (!isAuthenticated) {
@@ -156,26 +158,83 @@ export function ChatPanel({
       } catch (e) {}
     }
 
-    const base64Files = await Promise.all(
-      attachedFiles.map(
-        (file) =>
-          new Promise<{ name: string; mimeType: string; data: string }>(
-            (resolve) => {
-              const reader = new FileReader();
-              reader.onload = () => {
-                const result = reader.result as string;
-                const base64Data = result.split(",")[1];
-                resolve({
-                  name: file.name,
-                  mimeType: file.type,
-                  data: base64Data || "",
-                });
-              };
-              reader.readAsDataURL(file);
-            },
-          ),
-      ),
-    );
+    let base64Files: { name: string; mimeType: string; data: string }[] = [];
+    try {
+      base64Files = await Promise.all(
+        attachedFiles.map(
+          (file) =>
+            new Promise<{ name: string; mimeType: string; data: string }>(
+              (resolve, reject) => {
+                const reader = new FileReader();
+                const timeoutId = setTimeout(() => {
+                  reader.abort();
+                  reject(new Error(`File read timeout: ${file.name}`));
+                }, 10000);
+
+                reader.onload = () => {
+                  clearTimeout(timeoutId);
+                  const result = reader.result as string;
+                  if (!result) {
+                    reject(
+                      new Error(`Empty read result for file: ${file.name}`),
+                    );
+                    return;
+                  }
+                  const parts = result.split(",");
+                  if (parts.length < 2) {
+                    reject(
+                      new Error(
+                        `Invalid data URL format for file: ${file.name}`,
+                      ),
+                    );
+                    return;
+                  }
+                  const base64Data = parts[1];
+                  resolve({
+                    name: file.name,
+                    mimeType: file.type,
+                    data: base64Data || "",
+                  });
+                };
+
+                reader.onerror = () => {
+                  clearTimeout(timeoutId);
+                  reject(
+                    new Error(
+                      `Failed to read file ${file.name}: ${
+                        reader.error?.message || "unknown error"
+                      }`,
+                    ),
+                  );
+                };
+
+                reader.onabort = () => {
+                  clearTimeout(timeoutId);
+                  reject(new Error(`File read aborted: ${file.name}`));
+                };
+
+                reader.readAsDataURL(file);
+              },
+            ),
+        ),
+      );
+    } catch (error) {
+      setAttachedFiles([]);
+      setMessages((prev) => {
+        const updated = [...prev];
+        const lastMsg = updated[updated.length - 1];
+        if (lastMsg && lastMsg.role === "assistant") {
+          lastMsg.content =
+            error instanceof Error
+              ? error.message
+              : "Failed to load attached files.";
+        }
+        return updated;
+      });
+      setIsLoading(false);
+      setAbortController(null);
+      return;
+    }
 
     setAttachedFiles([]);
 

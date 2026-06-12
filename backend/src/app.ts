@@ -8,6 +8,8 @@ import { conversationRouter } from "./routes/conversation";
 import { userRouter } from "./routes/user";
 import { Authorize } from "./middleware/authorize";
 
+import { rateLimiter, contentLengthValidator } from "./middleware/security";
+
 export function createApp() {
   const app = express();
 
@@ -26,6 +28,8 @@ export function createApp() {
       credentials: true,
     }),
   );
+  app.use(rateLimiter);
+  app.use(contentLengthValidator);
   app.use(express.json({ limit: "20mb" }));
 
   app.use("/health", healthRouter);

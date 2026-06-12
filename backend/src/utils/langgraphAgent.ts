@@ -93,17 +93,13 @@ function getChatModel(
 }
 
 async function initializeNode(state: typeof GraphState.State) {
-  let conversationId = state.conversationId;
-  const userId = state.userId;
-
-  if (conversationId) {
-    const conversation = await getConversation(conversationId, userId);
-    if (!conversation || conversation.userId !== userId) {
-      throw new Error("Conversation not found or unauthorized.");
-    }
-  } else {
-    const conversation = await createConversation(userId);
-    conversationId = conversation.id;
+  const conversationId = state.conversationId;
+  if (
+    !conversationId ||
+    typeof conversationId !== "string" ||
+    conversationId.trim() === ""
+  ) {
+    throw new Error("Invalid or missing conversationId.");
   }
 
   const previousMessages = await getMessages(conversationId);
@@ -132,13 +128,41 @@ async function ingestNode(state: typeof GraphState.State) {
   });
   const chunks = await splitter.splitText(fileText);
 
+  const uniqueChunks = Array.from(
+    new Set(chunks.map((c) => c.trim()).filter(Boolean)),
+  );
+  if (uniqueChunks.length === 0) {
+    return {};
+  }
+
   const embeddings = getEmbeddings(state.baseModel, state.apiKeys);
   const vectorStore = new QdrantVectorStore(embeddings, {
     client: qdrant,
     collectionName: env.qdrantCollection,
   });
 
-  const docs = chunks.map(
+  try {
+    await qdrant.delete(env.qdrantCollection, {
+      filter: {
+        must: [
+          {
+            key: "metadata.conversation_id",
+            match: {
+              value: state.conversationId,
+            },
+          },
+        ],
+      },
+    });
+  } catch (deleteErr) {
+    console.warn(
+      "Failed to delete existing vectors for conversationId:",
+      state.conversationId,
+      deleteErr,
+    );
+  }
+
+  const docs = uniqueChunks.map(
     (chunk) =>
       new Document({
         pageContent: chunk,
@@ -222,10 +246,17 @@ ${state.question}
           : state.question;
     }
 
-    await prisma.conversation.update({
-      where: { id: state.conversationId },
-      data: { title },
-    });
+    try {
+      await prisma.conversation.update({
+        where: { id: state.conversationId },
+        data: { title },
+      });
+    } catch (dbErr) {
+      console.warn(
+        `Failed to update conversation title for conversationId: ${state.conversationId}. It might have been deleted. Title was: ${title}`,
+        dbErr,
+      );
+    }
 
     return { title };
   } catch (err) {
@@ -283,6 +314,7 @@ async function generateNode(
     if (onToken) {
       onToken(errorMsg);
     }
+    throw err;
   }
 
   const savedResponse = responseText.trim() || "[No response from provider]";
